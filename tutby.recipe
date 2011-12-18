@@ -1,0 +1,84 @@
+#!/usr/bin/env  python
+# -*- coding: utf-8 -*-
+
+##
+## Title:        TUT.BY news Recipe
+## Contact:      wistful - <wst dot public dot mail at gmail dot com>'
+##
+## License:      GNU General Public License v3 - http://www.gnu.org/copyleft/gpl.html
+## Copyright:    wistful - <wst dot public dot mail at gmail dot com>'
+##
+## Written:      December 2012
+## Last Edited:  2012-12-18
+##
+
+__license__     = 'GNU General Public License v3 - http://www.gnu.org/copyleft/gpl.html'
+__copyright__ = '2011 wistful <wst dot public dot mail at gmail dot com>'
+
+
+from calibre.web.feeds.news import BasicNewsRecipe
+from calibre.ebooks.BeautifulSoup import Tag, NavigableString
+from urlparse import urljoin
+import re
+
+
+'''
+http://tut.by/
+'''
+
+
+rm_tags = re.compile(r'<[^<]*?>')
+
+
+def cleanup(soup_tag):
+    return rm_tags.sub('', str(soup_tag))
+
+
+class TutBy(BasicNewsRecipe):
+    oldest_article          = 20
+    max_articles_per_feed   = 100
+    masthead_url            = 'http://img.tyt.by/titul_by2/logo_ru2.gif'
+    title                   = 'TUT.BY'
+    __author__              = 'wistful'
+    description             = u'НОВОСТИ ПОРТАЛА TUT.BY'
+    publisher               = 'TUT.BY'
+    publication_type        = 'newsportal'
+    category                = 'news, Belarus'
+    INDEX                   = 'http://m.tut.by/'
+    language                = 'ru'
+
+    keep_only_tags          = [dict(name='div', attrs={'class': re.compile("(^|.*\s+)article(\s+.*|$)", re.IGNORECASE)})]
+    remove_tags             = [ dict(name='object'),
+                                dict(name='div', attrs={'id': re.compile('^swf.*', re.IGNORECASE)}),
+                                dict(name='a', attrs={'href': re.compile('upload', re.IGNORECASE)})]
+    no_stylesheets = True
+    extra_css = """
+        .date, .rubric, .authorContainer {font-size: 0.6em;}
+        ul.author {margin: 5px 0;}
+    """
+    language = 'es_AR'
+    lang = 'ru'
+    direction             = 'ltr'
+
+    html2lrf_options = [
+        '--comment'  , description
+        , '--category' , category
+        , '--publisher', publisher
+    ]
+
+    html2epub_options = 'publisher="' + publisher + '"\ncomments="' + description + '"\ntags="' + category
+
+    def parse_index(self):
+        doc = self.index_to_soup(self.INDEX)
+        feeds = []
+        for category in doc.findAll('dl'):
+            category_name = cleanup(category.find('h2'))
+            articles = []
+            for post in category.findAll('dd'):
+                more_link = post.find('a')
+                if more_link:
+                    link = urljoin(self.INDEX, more_link['href']).replace('m.tut.by/news/', 'news.tut.by/')
+                    title = cleanup(more_link)
+                    articles.append({'title': title, 'url': link, 'content': '', 'date': '', 'description': ''})
+            feeds.append((category_name, articles))
+        return feeds
