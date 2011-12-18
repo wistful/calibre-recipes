@@ -1,0 +1,83 @@
+#!/usr/bin/env  python
+# -*- coding: utf-8 -*-
+
+##
+## Title:        Inopressa Recipe
+## Contact:      wistful - <wst dot public dot mail at gmail dot com>'
+##
+## License:      GNU General Public License v3 - http://www.gnu.org/copyleft/gpl.html
+## Copyright:    wistful - <wst dot public dot mail at gmail dot com>'
+##
+## Written:      December 2011
+## Last Edited:  2011-12-18
+##
+
+__license__     = 'GNU General Public License v3 - http://www.gnu.org/copyleft/gpl.html'
+__copyright__ = '2011 wistful <wst dot public dot mail at gmail dot com>'
+
+
+from urlparse import urljoin
+import re
+from calibre.web.feeds.news import BasicNewsRecipe
+from calibre.ebooks.BeautifulSoup import Tag, NavigableString
+
+
+'''
+http://www.inopressa.ru/
+'''
+
+
+rm_tags = re.compile(r'<[^<]*?>')
+
+
+def cleanup(soup_tag):
+    return rm_tags.sub('', str(soup_tag))
+
+
+class Inopressa(BasicNewsRecipe):
+
+    oldest_article          = 20
+    max_articles_per_feed   = 100
+    masthead_url            = 'http://static.inopressa.ru/img/inopressa-logo-light.gif'
+    title                   = 'Inopressa'
+    __author__              = 'wistful'
+    description             = u'Иностранная пресса о России и не только'
+    publisher               = 'Inopress.ru'
+    publication_type        = 'newsportal'
+    category                = 'news'
+    INDEX = 'http://www.inopressa.ru/'
+    language                = 'ru'
+
+    keep_only_tags = [dict(name='div', attrs={'class':'article'})]
+
+    no_stylesheets = True
+    lang = 'ru'
+    direction             = 'ltr'
+
+    html2lrf_options = [
+        '--comment'  , description
+        , '--category' , category
+        , '--publisher', publisher
+    ]
+
+    html2epub_options = 'publisher="' + publisher + '"\ncomments="' + description + '"\ntags="' + category
+
+    def parse_index(self):
+        doc = self.index_to_soup(self.INDEX)
+        feeds = []
+        categories = {
+            u'Hot Theme': doc.find('div', attrs={'class': 'theme'}),
+            u'Top News': doc.find('div', attrs={'class': 'topnews'}),
+            u'Day News': doc.find('div', attrs={'class': 'daynews'})
+        }
+
+        for category_name, category_tag in categories.items():
+            articles = []
+            for article in category_tag.findAll('div', attrs={'class': 'topic'}):
+                link = urljoin(self.INDEX, article.h2.a['href'])
+                title = cleanup(article.h2)
+                description = article.find(attrs={'class': 'lead'})
+                articles.append({'title': title, 'url': link, 'content': '', 'date': '', 'description': cleanup(description)})
+            feeds.append((category_name, articles))
+
+        return feeds
