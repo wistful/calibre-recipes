@@ -1,0 +1,104 @@
+#!/usr/bin/env  python
+# -*- coding: utf-8 -*-
+
+##
+## Title:        Charter97 news Recipe
+## Contact:      wistful - <wst dot public dot mail at gmail dot com>'
+##
+## License:      GNU General Public License v3 - http://www.gnu.org/copyleft/gpl.html
+## Copyright:    wistful - <wst dot public dot mail at gmail dot com>'
+##
+## Written:      December 2011
+## Last Edited:  2011-12-21
+##
+
+__license__     = 'GNU General Public License v3 - http://www.gnu.org/copyleft/gpl.html'
+__copyright__ = '2011 wistful <wst dot public dot mail at gmail dot com>'
+
+
+from urlparse import urljoin
+from urllib2 import urlopen
+import re
+from calibre.web.feeds.news import BasicNewsRecipe
+from calibre.ebooks.BeautifulSoup import Tag, NavigableString
+from calibre.ptempfile import PersistentTemporaryFile
+import gzip
+import StringIO
+
+
+'''
+http://charter97.org/
+'''
+
+
+rm_tags = re.compile(r'<[^<]*?>')
+
+
+def cleanup(soup_tag):
+    return rm_tags.sub('', str(soup_tag))
+
+
+class Charter97(BasicNewsRecipe):
+    oldest_article          = 50
+    max_articles_per_feed   = 100
+    __author__              = 'wistful'
+    masthead_url            = "http://charter97.org/images/logo.gif"
+    title                   = "Хартия'97"
+    description             = 'Новости из Беларуси'
+    INDEX                   = 'http://charter97.org/ru/news/'
+    BASE                    = 'http://charter97.org/'
+    publisher               = 'charter97.org'
+    publication_type        = 'newsportal'
+    category                = 'news, Belarus'
+
+    lang        = 'ru'
+    language    = 'ru'
+    direction   = 'ltr'
+    encoding = 'cp1251'
+
+    remove_tags = [dict(attrs={'href': re.compile('.*_logo.png$', re.IGNORECASE)}),
+                   dict(attrs={'src': re.compile('.*_logo.png$', re.IGNORECASE)}),
+                   dict(name='noindex'), dict(name='object')]
+    keep_only_tags = [dict(name='div', attrs={'class': 'article'})]
+
+    no_stylesheets = True
+
+
+    def opener(self, url):
+        """
+        some times index page returned as simple html, some as gz archive.
+        developers should burn in hell
+        """
+        response = urlopen(url, timeout=3)
+        data = response.read()
+        try:
+            return self.index_to_soup(gzip.GzipFile(fileobj=StringIO.StringIO(data)).read())
+        except IOError, ex:
+            return self.index_to_soup(data)
+
+    def preprocess_raw_html(self, raw_html, url):
+        """
+        some page returned as simple html, some as gz archive.
+        developers should burn in hell
+        """
+        if not 'body' in raw_html:
+            try:
+                gz = gzip.GzipFile(fileobj=StringIO.StringIO(urlopen(url).read())).read()
+                return unicode(gz, 'cp1251')
+            except IOError, ex:
+                return raw_html
+
+
+    def parse_index(self):
+        feeds = {}
+        doc = self.opener(self.INDEX)
+        for header in doc.findAll('h2'):
+            title = cleanup(header.a)
+            link = urljoin(self.BASE, header.a['href'])
+            category = cleanup(header.findNextSibling('p', attrs={'class': 'info'}).a)
+            description = header.findNextSibling(lambda tag: tag.name == 'p' and tag.get('class', '') == '')
+            if not category in feeds:
+                feeds[category] = []
+            feeds[category].append({'title': title, 'url': link, 'content': '', 'date': '', 'description': str(description)})
+
+        return feeds.items()
