@@ -1,0 +1,84 @@
+#!/usr/bin/env  python
+# -*- coding: utf-8 -*-
+
+##
+## Title:        Sports News
+## Contact:      wistful - <wst dot public dot mail at gmail dot com>'
+##
+## License:      GNU General Public License v3 - http://www.gnu.org/copyleft/gpl.html
+## Copyright:    wistful - <wst dot public dot mail at gmail dot com>'
+##
+## Written:      December 2011
+## Last Edited:  2011-12-23
+##
+
+__license__     = 'GNU General Public License v3 - http://www.gnu.org/copyleft/gpl.html'
+__copyright__ = '2011 wistful <wst dot public dot mail at gmail dot com>'
+
+
+from urlparse import urljoin
+import re
+from calibre.web.feeds.news import BasicNewsRecipe
+from calibre.ebooks.BeautifulSoup import Tag, NavigableString
+
+'''
+http://www.sports.ru/football/
+'''
+
+
+rm_tags = re.compile(r'<[^<]*?>')
+
+
+def cleanup(soup_tag):
+    return rm_tags.sub('', str(soup_tag))
+
+
+class Sports(BasicNewsRecipe):
+
+    oldest_article          = 3
+    max_articles_per_feed   = 100
+    masthead_url            = 'http://www.sports.ru/i/logo.gif'
+    title                   = 'Новости SPORTS.RU'
+    __author__              = 'wistful'
+    description             = u'спорт сегодня главное'
+    publisher               = 'sports.ru'
+    publication_type        = 'newsportal'
+    category                = 'news, sport'
+    language                = 'ru'
+    lang                    = 'ru'
+    direction               = 'ltr'
+
+    categories = {'футбол': 'http://www.sports.ru/news/football/?link=all',
+                  'хоккей': 'http://www.sports.ru/news/hockey/?link=all'}
+
+
+    remove_tags = [dict(name='h1'),
+    dict(name='p', attrs={'class': 'related'})]
+    no_stylesheets = True
+    extra_css = """
+        body {font-size: 0.6em;}
+        p {margin: 3px 0;}
+        """
+
+
+    html2lrf_options = [
+        '--comment'  , description
+        , '--category' , category
+        , '--publisher', publisher
+    ]
+
+    html2epub_options = 'publisher="' + publisher + '"\ncomments="' + description + '"\ntags="' + category
+
+    def parse_index(self):
+        feeds = []
+        for category in self.categories:
+            doc = self.index_to_soup(self.categories[category])
+            articles = []
+            for txt_link in doc.findAll('a', attrs={'class': 'txt'}):
+                if not txt_link:
+                    continue
+                title = cleanup(txt_link)
+                link = urljoin(self.categories[category], txt_link['href']) + '?print=1'
+                articles.append({'title': title, 'url': link, 'content': '', 'date': '', 'description': ''})
+            feeds.append((category, articles))
+        return feeds
