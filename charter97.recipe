@@ -73,11 +73,11 @@ class Charter97(BasicNewsRecipe):
         some times index page returned as simple html, some as gz archive.
         developers should burn in hell
         """
-        response = urlopen(url, timeout=3)
+        response = urlopen(url, timeout=10)
         data = response.read()
-        try:
+        if self.is_gzip(data):
             return self.index_to_soup(gzip.GzipFile(fileobj=StringIO.StringIO(data)).read())
-        except IOError, ex:
+        else:
             return self.index_to_soup(data)
 
     def is_gzip(self, data):

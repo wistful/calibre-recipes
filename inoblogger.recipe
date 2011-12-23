@@ -9,7 +9,7 @@
 ## Copyright:    wistful - <wst dot public dot mail at gmail dot com>'
 ##
 ## Written:      December 2011
-## Last Edited:  2011-12-18
+## Last Edited:  2011-12-23
 ##
 
 __license__     = 'GNU General Public License v3 - http://www.gnu.org/copyleft/gpl.html'
@@ -42,15 +42,15 @@ class Inoblogger(BasicNewsRecipe):
     publisher               = 'Inoblogger.ru'
     publication_type        = 'blog'
     category                = 'news, blog'
-    INDEX = 'http://inoblogger.ru/'
+    INDEX                   = 'http://inoblogger.ru/'
     language                = 'ru'
-    lang = 'ru'
+    lang                    = 'ru'
+    direction               = 'ltr'
 
-    auto_cleanup_keep = '//a[@class="title"]'
-    keep_only_tags = [dict(name='div', attrs={'class': re.compile("\s*post\s*", re.IGNORECASE)})]
-    remove_tags_after = [dict(name='div', attrs={'class': re.compile("\s*content\s*", re.IGNORECASE)})]
-    no_stylesheets = True
-    direction             = 'ltr'
+    auto_cleanup_keep       = '//a[@class="title"]'
+    keep_only_tags          = [dict(name='div', attrs={'class': re.compile("\s*post\s*", re.IGNORECASE)})]
+    remove_tags_after       = [dict(name='div', attrs={'class': re.compile("\s*content\s*", re.IGNORECASE)})]
+    no_stylesheets          = True
 
     html2lrf_options = [
         '--comment'  , description
@@ -70,7 +70,7 @@ class Inoblogger(BasicNewsRecipe):
             content = ''
             link = ''
             description = post.find(attrs={'class': 'content'})
-            [item.extract() for item in description.findAll() if item.name != 'p']
+            [item.extract for item in description.findAll() if item.name != 'p']
             if more_link:
                 link = more_link['href']
             else:

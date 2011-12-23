@@ -2,14 +2,14 @@
 # -*- coding: utf-8 -*-
 
 ##
-## Title:        TUT.BY news Recipe
+## Title:        Habrahabr Blogs Recipe
 ## Contact:      wistful - <wst dot public dot mail at gmail dot com>'
 ##
 ## License:      GNU General Public License v3 - http://www.gnu.org/copyleft/gpl.html
 ## Copyright:    wistful - <wst dot public dot mail at gmail dot com>'
 ##
 ## Written:      December 2011
-## Last Edited:  2011-12-18
+## Last Edited:  2011-12-23
 ##
 
 __license__     = 'GNU General Public License v3 - http://www.gnu.org/copyleft/gpl.html'
@@ -49,8 +49,8 @@ class Habr(BasicNewsRecipe):
     masthead_url            = 'http://upload.wikimedia.org/wikipedia/ru/7/7f/Habrahabr_logo.png'
 
     oldest_article          = 20
-    max_articles_per_feed   = 2
-    title                   = 'Habrahabr.ru'
+    max_articles_per_feed   = 200
+    title                   = u'Хабр'
     __author__              = 'wistful'
     description             = u'Блоги с HABRAHABR.RU'
     publisher               = 'habrahabr.ru'

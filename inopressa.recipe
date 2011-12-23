@@ -9,7 +9,7 @@
 ## Copyright:    wistful - <wst dot public dot mail at gmail dot com>'
 ##
 ## Written:      December 2011
-## Last Edited:  2011-12-18
+## Last Edited:  2011-12-23
 ##
 
 __license__     = 'GNU General Public License v3 - http://www.gnu.org/copyleft/gpl.html'
@@ -45,14 +45,14 @@ class Inopressa(BasicNewsRecipe):
     publisher               = 'Inopress.ru'
     publication_type        = 'newsportal'
     category                = 'news'
-    INDEX = 'http://www.inopressa.ru/'
+    INDEX                   = 'http://www.inopressa.ru/'
     language                = 'ru'
+    lang                    = 'ru'
+    direction               = 'ltr'
 
     keep_only_tags = [dict(name='div', attrs={'class':'article'})]
 
     no_stylesheets = True
-    lang = 'ru'
-    direction             = 'ltr'
 
     html2lrf_options = [
         '--comment'  , description
@@ -73,6 +73,8 @@ class Inopressa(BasicNewsRecipe):
 
         for category_name, category_tag in categories.items():
             articles = []
+            if not category_tag:
+                continue
             for article in category_tag.findAll('div', attrs={'class': 'topic'}):
                 link = urljoin(self.INDEX, article.h2.a['href'])
                 title = cleanup(article.h2)
