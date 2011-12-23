@@ -1,0 +1,92 @@
+#!/usr/bin/env  python
+# -*- coding: utf-8 -*-
+
+##
+## Title:        Euroradio News
+## Contact:      wistful - <wst dot public dot mail at gmail dot com>'
+##
+## License:      GNU General Public License v3 - http://www.gnu.org/copyleft/gpl.html
+## Copyright:    wistful - <wst dot public dot mail at gmail dot com>'
+##
+## Written:      December 2011
+## Last Edited:  2011-12-23
+##
+
+__license__     = 'GNU General Public License v3 - http://www.gnu.org/copyleft/gpl.html'
+__copyright__ = '2011 wistful <wst dot public dot mail at gmail dot com>'
+
+
+from urlparse import urljoin
+import re
+from calibre.web.feeds.news import BasicNewsRecipe
+from calibre.ebooks.BeautifulSoup import Tag, NavigableString
+
+
+'''
+http://euroradio.fm/ru
+'''
+
+
+rm_tags = re.compile(r'<[^<]*?>')
+
+
+def cleanup(soup_tag):
+    return rm_tags.sub('', str(soup_tag))
+
+
+class Euroradio(BasicNewsRecipe):
+
+    oldest_article          = 3
+    max_articles_per_feed   = 100
+    masthead_url            = 'http://euroradio.fm/sites/all/themes/euroradio/images/bg-logo.png'
+    title                   = 'Еврорадио'
+    __author__              = 'wistful'
+    description             = u'Последние новости политики и культуры Беларуси'
+    publisher               = 'euroradio.fm'
+    publication_type        = 'newsportal'
+    category                = 'news'
+    INDEX                   = 'http://euroradio.fm/ru'
+    language                = 'ru'
+    lang                    = 'ru'
+    direction               = 'ltr'
+
+    keep_only_tags = [dict(name='div', attrs={'class': re.compile("\s*col-01\s*", re.IGNORECASE)})]
+    remove_tags = [dict(name='div', attrs={'class': re.compile("\s*soc-icon-block\s*", re.IGNORECASE)}),
+                   dict(name='noindex')]
+    no_stylesheets = True
+    extra_css = """
+        body, body.calibre {font-size: 11pt;}
+        p {margin: 0.5em 0;}
+        """
+
+
+    html2lrf_options = [
+        '--comment'  , description
+        , '--category' , category
+        , '--publisher', publisher
+    ]
+
+    html2epub_options = 'publisher="' + publisher + '"\ncomments="' + description + '"\ntags="' + category
+
+    def parse_index(self):
+        doc = self.index_to_soup(self.INDEX)
+        feeds = []
+
+        categories = {
+            u'Горячие новости': doc.find(attrs={'class': 'entry-columns'}).find('ul', attrs={'class': 'accordion'}),
+            u'Репортажи': doc.find('div', attrs={'id': 'picday'}),
+            u'Мнения': doc.find('div', attrs={'id': 'opinions'}),
+            u'Новости': doc.find('div', attrs={'class': 'billboard-blue news-new'})
+        }
+
+        for category_name, category_tag in categories.items():
+            articles = []
+            for item in category_tag.findAll('h3'):
+                more_link = item.find('a')
+                if more_link:
+                    link = urljoin(self.INDEX, more_link['href'])
+                    title = cleanup(more_link)
+                    articles.append({'title': title, 'url': link, 'content': '', 'date': '', 'description': ''})
+            feeds.append((category_name, articles))
+
+        return feeds
