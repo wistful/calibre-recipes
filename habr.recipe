@@ -49,7 +49,7 @@ class Habr(BasicNewsRecipe):
     masthead_url            = 'http://upload.wikimedia.org/wikipedia/ru/7/7f/Habrahabr_logo.png'
 
     oldest_article          = 20
-    max_articles_per_feed   = 200
+    max_articles_per_feed   = 20
     title                   = u'Хабр'
     __author__              = 'wistful'
     description             = u'Блоги с HABRAHABR.RU'
