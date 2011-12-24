@@ -32,7 +32,7 @@ def cleanup(soup_tag):
     return rm_tags.sub('', str(soup_tag))
 
 
-class NashaNiva(BasicNewsRecipe):
+class NN(BasicNewsRecipe):
     oldest_article          = 50
     max_articles_per_feed   = 100
     __author__              = 'wistful'

@@ -34,7 +34,7 @@ def cleanup(soup_tag):
     return rm_tags.sub('', str(soup_tag))
 
 
-class Euroradio(BasicNewsRecipe):
+class AFN(BasicNewsRecipe):
 
     oldest_article          = 3
     max_articles_per_feed   = 100
