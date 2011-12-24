@@ -1,0 +1,96 @@
+#!/usr/bin/env  python
+# -*- coding: utf-8 -*-
+
+##
+## Title:        Belapan News
+## Contact:      wistful - <wst dot public dot mail at gmail dot com>'
+##
+## License:      GNU General Public License v3 - http://www.gnu.org/copyleft/gpl.html
+## Copyright:    wistful - <wst dot public dot mail at gmail dot com>'
+##
+## Written:      December 2011
+## Last Edited:  2011-12-24
+##
+
+__license__     = 'GNU General Public License v3 - http://www.gnu.org/copyleft/gpl.html'
+__copyright__ = '2011 wistful <wst dot public dot mail at gmail dot com>'
+
+
+from urlparse import urljoin
+import re
+from calibre.web.feeds.news import BasicNewsRecipe
+from calibre.ebooks.BeautifulSoup import Tag, NavigableString
+
+
+'''
+http://belapan.by/
+'''
+
+
+rm_tags = re.compile(r'<[^<]*?>')
+
+
+def cleanup(soup_tag):
+    return rm_tags.sub('', str(soup_tag))
+
+
+class Euroradio(BasicNewsRecipe):
+
+    oldest_article          = 3
+    max_articles_per_feed   = 100
+    masthead_url            = 'http://belapan.by/webroot/delivery/pic/logo.gif'
+    title                   = u'БЕЛАПАН'
+    __author__              = 'wistful'
+    description             = u'Белорусская информационная компания'
+    publisher               = 'belapan.by'
+    publication_type        = 'newsportal'
+    category                = 'news'
+    INDEX                   = 'http://belapan.by/'
+    language                = 'ru'
+    lang                    = 'ru'
+    direction               = 'ltr'
+
+    categories = {
+        u'Политика'         : 'http://belapan.by/news/politics/',
+        u'Экономика': 'http://belapan.by/news/economy/',
+        u'Финансы': 'http://belapan.by/news/finances/',
+        u'Общество': 'http://belapan.by/news/society/',
+        u'Культура': 'http://belapan.by/news/culture/',
+        u'Спорт': 'http://belapan.by/news/sport/',
+    }
+
+    keep_only_tags = [dict(attrs={'class': 'news-title'}),
+                      dict(name='div', attrs={'class': 'wysiwygContent'}),
+                      dict(name='div', attrs={'class': 'auth-line'})]
+
+    no_stylesheets = True
+    extra_css = """
+        body, body.calibre {font-size: 11pt;}
+        p {margin: 0.5em 0;}
+        """
+
+    html2lrf_options = [
+        '--comment'  , description
+        , '--category' , category
+        , '--publisher', publisher
+    ]
+
+    html2epub_options = 'publisher="' + publisher + '"\ncomments="' + description + '"\ntags="' + category
+
+    def parse_index(self):
+        feeds = []
+        for category_name, category_tag in self.categories.items():
+            doc = self.index_to_soup(category_tag)
+            articles = []
+            for item in doc.find(attrs={'id': 'docsslot'}).findAll('li'):
+                if item.find('img', attrs={'class': 'key'}):
+                    continue
+
+                more_link = item.a
+                if more_link:
+                    title = cleanup(more_link)
+                    link = urljoin(self.INDEX, more_link['href'])
+                    articles.append({'title': title, 'url': link, 'content': '', 'date': '', 'description': ''})
+            feeds.append((category_name, articles))
+
+        return feeds
