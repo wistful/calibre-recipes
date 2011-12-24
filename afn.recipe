@@ -1,0 +1,93 @@
+#!/usr/bin/env  python
+# -*- coding: utf-8 -*-
+
+##
+## Title:        AFN News
+## Contact:      wistful - <wst dot public dot mail at gmail dot com>'
+##
+## License:      GNU General Public License v3 - http://www.gnu.org/copyleft/gpl.html
+## Copyright:    wistful - <wst dot public dot mail at gmail dot com>'
+##
+## Written:      December 2011
+## Last Edited:  2011-12-24
+##
+
+__license__     = 'GNU General Public License v3 - http://www.gnu.org/copyleft/gpl.html'
+__copyright__ = '2011 wistful <wst dot public dot mail at gmail dot com>'
+
+
+from urlparse import urljoin
+import re
+from calibre.web.feeds.news import BasicNewsRecipe
+from calibre.ebooks.BeautifulSoup import Tag, NavigableString
+
+
+'''
+http://afn.by/
+'''
+
+
+rm_tags = re.compile(r'<[^<]*?>')
+
+
+def cleanup(soup_tag):
+    return rm_tags.sub('', str(soup_tag))
+
+
+class Euroradio(BasicNewsRecipe):
+
+    oldest_article          = 3
+    max_articles_per_feed   = 100
+    masthead_url            = 'http://s.afn.by/images/logo.gif'
+    title                   = 'АФН'
+    __author__              = 'wistful'
+    description             = 'AFN.BY'
+    publisher               = 'afn.by'
+    publication_type        = 'newsportal'
+    category                = 'news'
+    INDEX                   = 'http://afn.by/'
+    language                = 'ru'
+    lang                    = 'ru'
+    direction               = 'ltr'
+
+    categories = {
+        u'Главное'  : 'http://afn.by/news/top',
+        u'Политика'         : 'http://afn.by/news/politics',
+        u'Экономика': 'http://afn.by/news/economy',
+        u'Энергетика': 'http://afn.by/news/energy',
+        u'Россия, СНГ': 'http://afn.by/news/cis',
+        u'В мире': 'http://afn.by/news/world',
+        u'Общество': 'http://afn.by/news/social',
+    }
+
+    keep_only_tags = [dict(name='div', attrs={'class': 'hd'}),
+                      dict(name='div', attrs={'class': 'bd'})]
+    remove_tags = [dict(name='script'), dict(id='fb-root'), dict(name='iframe')]
+    no_stylesheets = True
+    extra_css = """
+        body, body.calibre {font-size: 11pt;}
+        p {margin: 0.5em 0;}
+        """
+
+    html2lrf_options = [
+        '--comment'  , description
+        , '--category' , category
+        , '--publisher', publisher
+    ]
+
+    html2epub_options = 'publisher="' + publisher + '"\ncomments="' + description + '"\ntags="' + category
+
+    def parse_index(self):
+        feeds = []
+        for category_name, category_tag in self.categories.items():
+            doc = self.index_to_soup(category_tag)
+            articles = []
+            for item in doc.findAll('div', attrs={'class': 'doc'}):
+                more_link = item.find(attrs={'class': 'hd'}).find('h3').find('a')
+                if more_link:
+                    title = cleanup(more_link)
+                    link = urljoin(self.INDEX, more_link['href'])
+                    articles.append({'title': title, 'url': link, 'content': '', 'date': '', 'description': ''})
+            feeds.append((category_name, articles))
+
+        return feeds
