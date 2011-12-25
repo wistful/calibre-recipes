@@ -1,0 +1,98 @@
+#!/usr/bin/env  python
+# -*- coding: utf-8 -*-
+
+##
+## Title:        KV News
+## Contact:      wistful - <wst dot public dot mail at gmail dot com>'
+##
+## License:      GNU General Public License v3 - http://www.gnu.org/copyleft/gpl.html
+## Copyright:    wistful - <wst dot public dot mail at gmail dot com>'
+##
+## Written:      December 2011
+## Last Edited:  2011-12-25
+##
+
+__license__     = 'GNU General Public License v3 - http://www.gnu.org/copyleft/gpl.html'
+__copyright__ = '2011 wistful <wst dot public dot mail at gmail dot com>'
+
+
+from urlparse import urljoin
+import re
+from calibre.web.feeds.news import BasicNewsRecipe
+from calibre.ebooks.BeautifulSoup import Tag, NavigableString
+
+
+'''
+http://new.kv.by/
+'''
+
+
+rm_tags = re.compile(r'<[^<]*?>')
+
+
+def cleanup(soup_tag):
+    return rm_tags.sub('', str(soup_tag))
+
+
+class KV(BasicNewsRecipe):
+
+    oldest_article          = 3
+    max_articles_per_feed   = 50
+    masthead_url            = 'http://kv.by/img/kvlogo.gif'
+    title                   = u'Компьютерные Вести'
+    __author__              = 'wistful'
+    description             = u'Компьютерные Вести'
+    publisher               = 'kv.by'
+    publication_type        = 'newsportal'
+    category                = 'news'
+    INDEX                   = 'http://new.kv.by/'
+    language                = 'ru'
+    lang                    = 'ru'
+    direction               = 'ltr'
+
+    category_url            = 'http://new.kv.by/rubrics'
+
+    keep_only_tags = [dict(name='div', attrs={'class': 'node'})]
+
+    no_stylesheets = True
+    extra_css = """
+        body, body.calibre {font-size: 11pt;}
+        p {margin: 0.5em 0;}
+        """
+
+    html2lrf_options = [
+        '--comment'  , description
+        , '--category' , category
+        , '--publisher', publisher
+    ]
+
+    html2epub_options = 'publisher="' + publisher + '"\ncomments="' + description + '"\ntags="' + category
+
+    def preprocess_html(self, soup):
+        for item in soup.findAll('a', recursive=False):
+            item.extract()
+        soup.find(attrs={'class': 'links'}).extract()
+        soup.find(attrs={'class': 'taxonomy'}).extract()
+        soup.find(attrs={'class': 'zeliboba'}).extract()
+        return soup
+
+    def parse_index(self):
+        feeds = []
+        categories = {}
+        doc = self.index_to_soup(self.category_url)
+        for category_item in doc.findAll(attrs={'class': 'partMark'}):
+            categories[cleanup(category_item.a)] = urljoin(self.category_url, category_item.a['href'])
+
+        for category_name, category_tag in categories.items():
+            if 'displei-press' in category_tag:
+                continue
+            doc = self.index_to_soup(category_tag)
+            articles = []
+            for item in doc.findAll(attrs={'class': 'index_article_header'}):
+                more_link = item.find(attrs={'class': 'partMark'}).nextSibling
+                if more_link:
+                    title = cleanup(more_link)
+                    link = urljoin(self.INDEX, more_link['href'])
+                    articles.append({'title': title, 'url': link, 'content': '', 'date': '', 'description': ''})
+            feeds.append((category_name, articles))
+        return feeds
