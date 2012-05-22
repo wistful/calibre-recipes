@@ -2,26 +2,25 @@
 # -*- coding: utf-8 -*-
 
 ##
-## Title:        Habrahabr Blogs Recipe
+## Title:        Habrahabr hub Recipe
 ## Contact:      wistful - <wst dot public dot mail at gmail dot com>'
 ##
 ## License:      GNU General Public License v3 - http://www.gnu.org/copyleft/gpl.html
 ## Copyright:    wistful - <wst dot public dot mail at gmail dot com>'
 ##
 ## Written:      December 2011
-## Last Edited:  2011-12-23
+## Last Edited:  2012-05-22
 ##
 
 __license__     = 'GNU General Public License v3 - http://www.gnu.org/copyleft/gpl.html'
-__copyright__ = '2011 wistful <wst dot public dot mail at gmail dot com>'
+__copyright__ = '2012 wistful <wst dot public dot mail at gmail dot com>'
 
 import re
 from calibre.web.feeds.news import BasicNewsRecipe
-from calibre.ebooks.BeautifulSoup import Tag, NavigableString
 
 
 '''
-http://habrahabr.ru/blogs/
+http://habrahabr.ru/hub/
 '''
 
 
@@ -33,17 +32,17 @@ def cleanup(soup_tag):
 
 
 class Habr(BasicNewsRecipe):
-    blogs = {'webdev':      'http://habrahabr.ru/blogs/webdev/',
-             'javascript':  'http://habrahabr.ru/blogs/javascript/',
-             'jQuery':      'http://habrahabr.ru/blogs/jquery/',
-             'css':         'http://habrahabr.ru/blogs/css/',
-             'python':      'http://habrahabr.ru/blogs/python/',
-             'linux':       'http://habrahabr.ru/blogs/linux/',
-             'Убунтариум':  'http://habrahabr.ru/blogs/ubuntu/',
-             'development': 'http://habrahabr.ru/blogs/development/',
-             'programming': 'http://habrahabr.ru/blogs/programming/',
-             'Git':         'http://habrahabr.ru/blogs/Git/',
-             'web design':  'http://habrahabr.ru/blogs/web_design/'
+    hub = {'webdev':      'http://habrahabr.ru/hub/webdev/',
+             'javascript':  'http://habrahabr.ru/hub/javascript/',
+             'jQuery':      'http://habrahabr.ru/hub/jquery/',
+             'css':         'http://habrahabr.ru/hub/css/',
+             'python':      'http://habrahabr.ru/hub/python/',
+             'linux':       'http://habrahabr.ru/hub/linux/',
+             'Убунтариум':  'http://habrahabr.ru/hub/ubuntu/',
+             'development': 'http://habrahabr.ru/hub/development/',
+             'programming': 'http://habrahabr.ru/hub/programming/',
+             'Git':         'http://habrahabr.ru/hub/Git/',
+             'web design':  'http://habrahabr.ru/hub/web_design/'
     }
 
     masthead_url            = 'http://upload.wikimedia.org/wikipedia/ru/7/7f/Habrahabr_logo.png'
@@ -52,7 +51,7 @@ class Habr(BasicNewsRecipe):
     max_articles_per_feed   = 20
     title                   = u'Хабр'
     __author__              = 'wistful'
-    description             = u'Блоги с HABRAHABR.RU'
+    description             = u'Habrahabr hub'
     publisher               = 'habrahabr.ru'
     publication_type        = 'blog'
     category                = 'it, tech, news'
@@ -75,21 +74,22 @@ class Habr(BasicNewsRecipe):
         , '--publisher', publisher
     ]
 
-    html2epub_options = 'publisher="' + publisher + '"\ncomments="' + description + '"\ntags="' + category
+    html2epub_options = 'publisher="%s"\ncomments="%s"\ntags="%s"' % (publisher, description, category)
 
     keep_only_tags = [dict(name='div', attrs={'class':'post'}), dict(name='div', attrs={'class':'comments_list '})]
 
     def parse_index(self):
         feeds = []
-        for blog_name, blog_url in self.blogs.items():
+        for blog_name, blog_url in self.hub.items():
             doc = self.index_to_soup(blog_url)
             articles = []
-            for post in doc.findAll('div', attrs={'class':'post'}):
+            for post in doc.findAll('div', attrs={'class': 'post'}):
                 title_link = post.find('a', attrs={'class': 'post_title'})
                 title = cleanup(title_link)
                 description = post.find('div', attrs={'class': 'content'})
-                [item.extract() for item in description.findAll('img')]
-                [item.extract() for item in description.findAll('div', attrs={'class': 'habracut'})]
+                if description:
+                    [item.extract() for item in description.findAll('img')]
+                    [item.extract() for item in description.findAll('div', attrs={'class': 'habracut'})]
                 articles.append({'title': title, 'url': title_link['href'], 'content': '', 'date': '', 'description': str(description)})
             feeds.append((blog_name, articles))
         return feeds

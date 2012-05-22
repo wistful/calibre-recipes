@@ -9,17 +9,16 @@
 ## Copyright:    wistful - <wst dot public dot mail at gmail dot com>'
 ##
 ## Written:      December 2011
-## Last Edited:  2011-12-24
+## Last Edited:  2012-05-22
 ##
 
 __license__     = 'GNU General Public License v3 - http://www.gnu.org/copyleft/gpl.html'
-__copyright__ = '2011 wistful <wst dot public dot mail at gmail dot com>'
+__copyright__ = '2012 wistful <wst dot public dot mail at gmail dot com>'
 
 
 from urlparse import urljoin
 import re
 from calibre.web.feeds.news import BasicNewsRecipe
-from calibre.ebooks.BeautifulSoup import Tag, NavigableString
 
 
 '''
@@ -51,7 +50,7 @@ class Belapan(BasicNewsRecipe):
     direction               = 'ltr'
 
     categories = {
-        u'Политика'         : 'http://belapan.by/news/politics/',
+        u'Политика': 'http://belapan.by/news/politics/',
         u'Экономика': 'http://belapan.by/news/economy/',
         u'Финансы': 'http://belapan.by/news/finances/',
         u'Общество': 'http://belapan.by/news/society/',
@@ -75,7 +74,7 @@ class Belapan(BasicNewsRecipe):
         , '--publisher', publisher
     ]
 
-    html2epub_options = 'publisher="' + publisher + '"\ncomments="' + description + '"\ntags="' + category
+    html2epub_options = 'publisher="%s"\ncomments="%s"\ntags="%s"' % (publisher, description, category)
 
     def parse_index(self):
         feeds = []

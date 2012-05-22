@@ -9,19 +9,17 @@
 ## Copyright:    wistful - <wst dot public dot mail at gmail dot com>'
 ##
 ## Written:      December 2011
-## Last Edited:  2011-12-23
+## Last Edited:  2012-05-22
 ##
 
 __license__     = 'GNU General Public License v3 - http://www.gnu.org/copyleft/gpl.html'
-__copyright__ = '2011 wistful <wst dot public dot mail at gmail dot com>'
+__copyright__ = '2012 wistful <wst dot public dot mail at gmail dot com>'
 
 
 from urlparse import urljoin
 from urllib2 import urlopen
 import re
 from calibre.web.feeds.news import BasicNewsRecipe
-from calibre.ebooks.BeautifulSoup import Tag, NavigableString
-from calibre.ptempfile import PersistentTemporaryFile
 from calibre.ebooks import chardet
 import gzip
 import StringIO
@@ -67,7 +65,6 @@ class Charter97(BasicNewsRecipe):
 
     no_stylesheets = True
 
-
     def opener(self, url):
         """
         some times index page returned as simple html, some as gz archive.
@@ -99,13 +96,6 @@ class Charter97(BasicNewsRecipe):
                     if not recursive:
                         return self.preprocess_raw_html(data, url, True)
             except IOError, ex:
-#                message = """
-#                IOError, {error_message}
-#                url: {url},
-#                data = {data}
-#
-#                """.format(error_message=ex, url=url, data=data)
-#                open('C:\calibre.log', 'a+').write(message)
                 return None
         else:
             return raw_html
