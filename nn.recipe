@@ -17,6 +17,7 @@ __copyright__ = '2012 wistful <wst dot public dot mail at gmail dot com>'
 
 import re
 from calibre.web.feeds.news import BasicNewsRecipe
+from urlparse import urljoin
 
 
 '''
@@ -39,6 +40,7 @@ class NN(BasicNewsRecipe):
     title                   = u'Наша Ніва'
     description             = u'Наша Ніва - Першая беларуская газета'
     INDEX                   = 'http://nn.by/rss.php'
+    main_url                = 'http://nn.by'
     publisher               = 'nn.by'
     publication_type        = 'newsportal'
     category                = 'news, Belarus'
@@ -50,10 +52,10 @@ class NN(BasicNewsRecipe):
     remove_tags = [dict(attrs={'href': re.compile('.*_logo.png$', re.IGNORECASE)}),
                    dict(attrs={'src': re.compile('.*_logo.png$', re.IGNORECASE)}),
                    dict(name='noindex'), dict(name='object')]
-    keep_only_tags = [dict(name='div', attrs={'class': 'copy-area'}),
-                      dict(name='h1', attrs={'class': 'article-title'}),
-                      dict(name='div', attrs={'class': re.compile('article-info')}),
-                      dict(name='div', attrs={'class': re.compile('article-content')}),
+    keep_only_tags = [dict(name='div', attrs={'class': re.compile(r'\bcopy-area\b')}),
+                      dict(name='h1', attrs={'class': re.compile(r'\barticle-title\b')}),
+                      dict(name='div', attrs={'class': re.compile(r'\barticle-info\b')}),
+                      dict(name='div', attrs={'class': re.compile(r'\barticle-content\b')}),
                     ]
 
     no_stylesheets = True
@@ -61,14 +63,18 @@ class NN(BasicNewsRecipe):
     html2epub_options = 'publisher="%s"\ncomments="%s"\ntags="%s"' % (publisher, description, category)
 
     def parse_index(self):
-        articles = []
-        doc = self.index_to_soup(self.INDEX)
-        for entry in doc.findAll('item'):
-            title = entry.title.contents[0]
-            link = entry.link.nextSibling.replace('index.php?c=ar&i;', '?c=arprint&i')
-            description = entry.description.contents
-            if description:
-                description = description[0]
-            articles.append({'title': title, 'url': link, 'content': '', 'date': '', 'description': description})
-
-        return [('news', articles)]
+        categories = [(cleanup(item), self.main_url + item['href']) for item in self.index_to_soup(self.main_url).find('div', attrs={'id': 'mainmenu'}).findAll('a')]
+        print categories
+        feeds = []
+        for c_name, c_url in categories:
+            doc = self.index_to_soup(c_url)
+            content = doc.find('table', attrs={'id': 'content'}).find('td').find('div', attrs={'class': 'section'})
+            articles = []
+            for rec in content.findAll('li'):
+                rec_title = cleanup(rec.find('h2').a)
+                rec_url = rec.find('h2').a['href'].replace('c=ar', 'c=arprint')
+                rec_descr = cleanup(rec.find('div', attrs={'class': re.compile(r'\bne-t1\b')}).p.find('a'))
+                print rec_title, rec_url, rec_descr
+                articles.append({'title': rec_title, 'url': rec_url, 'content': '', 'date': '', 'description': rec_descr})
+            feeds.append((c_name, articles))
+        return feeds
