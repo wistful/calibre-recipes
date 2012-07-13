@@ -32,17 +32,20 @@ def cleanup(soup_tag):
 
 
 class Habr(BasicNewsRecipe):
-    hub = {'webdev':      'http://habrahabr.ru/hub/webdev/',
-             'javascript':  'http://habrahabr.ru/hub/javascript/',
-             'jQuery':      'http://habrahabr.ru/hub/jquery/',
-             'css':         'http://habrahabr.ru/hub/css/',
-             'python':      'http://habrahabr.ru/hub/python/',
-             'linux':       'http://habrahabr.ru/hub/linux/',
-             'Убунтариум':  'http://habrahabr.ru/hub/ubuntu/',
-             'development': 'http://habrahabr.ru/hub/development/',
-             'programming': 'http://habrahabr.ru/hub/programming/',
-             'Git':         'http://habrahabr.ru/hub/Git/',
-             'web design':  'http://habrahabr.ru/hub/web_design/'
+    hub = {'webdev':                'http://habrahabr.ru/hub/webdev/',
+           'javascript':            'http://habrahabr.ru/hub/javascript/',
+           'jQuery':                'http://habrahabr.ru/hub/jquery/',
+           'css':                   'http://habrahabr.ru/hub/css/',
+           'python':                'http://habrahabr.ru/hub/python/',
+           'linux':                 'http://habrahabr.ru/hub/linux/',
+           'Убунтариум':            'http://habrahabr.ru/hub/ubuntu/',
+           'development':           'http://habrahabr.ru/hub/development/',
+           'programming':           'http://habrahabr.ru/hub/programming/',
+           'Git':                   'http://habrahabr.ru/hub/Git/',
+           'web design':            'http://habrahabr.ru/hub/web_design/',
+           'Управление проектами':  'http://habrahabr.ru/hub/pm/',
+           'Open Source':           'http://habrahabr.ru/hub/open_source/',
+           'Human Rresources':      'http://habrahabr.ru/hub/hr/'
     }
 
     masthead_url            = 'http://upload.wikimedia.org/wikipedia/ru/7/7f/Habrahabr_logo.png'
@@ -76,20 +79,20 @@ class Habr(BasicNewsRecipe):
 
     html2epub_options = 'publisher="%s"\ncomments="%s"\ntags="%s"' % (publisher, description, category)
 
-    keep_only_tags = [dict(name='div', attrs={'class':'post'}), dict(name='div', attrs={'class':'comments_list '})]
+    keep_only_tags = [dict(name='div', attrs={'class':re.compile(r'\bpost\b')}), dict(name='div', attrs={'class':re.compile(r'\bcomments_list\b')})]
 
     def parse_index(self):
         feeds = []
         for blog_name, blog_url in self.hub.items():
             doc = self.index_to_soup(blog_url)
             articles = []
-            for post in doc.findAll('div', attrs={'class': 'post'}):
-                title_link = post.find('a', attrs={'class': 'post_title'})
+            for post in doc.findAll('div', attrs={'class': re.compile(r'\bpost\b')}):
+                title_link = post.find('a', attrs={'class': re.compile(r'\bpost_title\b')})
                 title = cleanup(title_link)
-                description = post.find('div', attrs={'class': 'content'})
+                description = post.find('div', attrs={'class': re.compile(r'\bcontent\b')})
                 if description:
                     [item.extract() for item in description.findAll('img')]
-                    [item.extract() for item in description.findAll('div', attrs={'class': 'habracut'})]
+                    [item.extract() for item in description.findAll('div', attrs={'class': re.compile(r'\bhabracut\b')})]
                 articles.append({'title': title, 'url': title_link['href'], 'content': '', 'date': '', 'description': str(description)})
             feeds.append((blog_name, articles))
         return feeds
