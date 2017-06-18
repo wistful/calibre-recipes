@@ -32,23 +32,21 @@ def cleanup(soup_tag):
 
 
 class Habr(BasicNewsRecipe):
-    hub = {'webdev':                'http://habrahabr.ru/hub/webdev/',
+    hub = {'Лучшее':                'http://habrahabr.ru/top/',
+           'webdev':                'http://habrahabr.ru/hub/webdev/',
            'javascript':            'http://habrahabr.ru/hub/javascript/',
            'jQuery':                'http://habrahabr.ru/hub/jquery/',
            'css':                   'http://habrahabr.ru/hub/css/',
-           'python':                'http://habrahabr.ru/hub/python/',
            'linux':                 'http://habrahabr.ru/hub/linux/',
-           'Убунтариум':            'http://habrahabr.ru/hub/ubuntu/',
-           'development':           'http://habrahabr.ru/hub/development/',
            'programming':           'http://habrahabr.ru/hub/programming/',
            'Git':                   'http://habrahabr.ru/hub/Git/',
            'web design':            'http://habrahabr.ru/hub/web_design/',
            'Управление проектами':  'http://habrahabr.ru/hub/pm/',
-           'Open Source':           'http://habrahabr.ru/hub/open_source/',
-           'Human Rresources':      'http://habrahabr.ru/hub/hr/'
+           'Open Source':           'http://habrahabr.ru/hub/open_source/'
     }
 
     masthead_url            = 'http://upload.wikimedia.org/wikipedia/ru/7/7f/Habrahabr_logo.png'
+    cover_url               = 'http://upload.wikimedia.org/wikipedia/ru/7/7f/Habrahabr_logo.png'
 
     oldest_article          = 20
     max_articles_per_feed   = 20
@@ -57,6 +55,7 @@ class Habr(BasicNewsRecipe):
     description             = u'Habrahabr hub'
     publisher               = 'habrahabr.ru'
     publication_type        = 'blog'
+    series                  = 'news'
     category                = 'it, tech, news'
     language                = 'ru'
 
@@ -86,8 +85,8 @@ class Habr(BasicNewsRecipe):
         for blog_name, blog_url in self.hub.items():
             doc = self.index_to_soup(blog_url)
             articles = []
-            for post in doc.findAll('div', attrs={'class': re.compile(r'\bpost\b')}):
-                title_link = post.find('a', attrs={'class': re.compile(r'\bpost_title\b')})
+            for post in doc.findAll('div', attrs={'class': re.compile(r'\bpost_teaser\b')}):
+                title_link = post.find('a', attrs={'class': re.compile(r'\bpost__title_link\b')})
                 title = cleanup(title_link)
                 description = post.find('div', attrs={'class': re.compile(r'\bcontent\b')})
                 if description:
